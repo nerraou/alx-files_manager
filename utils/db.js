@@ -31,6 +31,10 @@ class DBClient {
   nbFiles() {
     return this.db.collection('files').countDocuments();
   }
+
+  getUser(query) {
+    return this.db.collection('users').findOne(query);
+  }
 }
 
 const dbClient = new DBClient();
