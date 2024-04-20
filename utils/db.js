@@ -49,6 +49,12 @@ class DBClient {
       .toArray();
   }
 
+  updateFile(query, data) {
+    return this.db.collection('files').updateOne(query, {
+      $set: data,
+    });
+  }
+
   createFile(file) {
     return this.db.collection('files').insertOne(file);
   }

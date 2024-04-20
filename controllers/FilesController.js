@@ -101,7 +101,10 @@ class FilesController {
     try {
       const { id } = request.params;
 
-      const file = await db.getFile({ _id: ObjectId(id) });
+      const file = await db.getFile({
+        _id: ObjectId(id),
+        userId: request.user._id.toString(),
+      });
 
       if (!file) {
         response.status(404).json({
@@ -127,7 +130,7 @@ class FilesController {
 
   static async getIndex(request, response) {
     try {
-      const { parentId, page } = request.query;
+      const { parentId, page = 0 } = request.query;
 
       let transformedParentId = parentId;
 
@@ -151,6 +154,86 @@ class FilesController {
           parentId: file.parentId,
         })),
       );
+    } catch (error) {
+      response.status(500).json({
+        error: 'server error',
+      });
+    }
+  }
+
+  static async putPublish(request, response) {
+    try {
+      const { id } = request.params;
+
+      const file = await db.getFile({
+        _id: ObjectId(id),
+        userId: request.user._id.toString(),
+      });
+
+      if (!file) {
+        response.status(404).json({
+          error: 'Not found',
+        });
+        return;
+      }
+
+      await db.updateFile(
+        {
+          _id: ObjectId(id),
+        },
+        {
+          isPublic: true,
+        },
+      );
+
+      response.json({
+        id: file._id.toString(),
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: true,
+        parentId: file.parentId,
+      });
+    } catch (error) {
+      response.status(500).json({
+        error: 'server error',
+      });
+    }
+  }
+
+  static async putUnpublish(request, response) {
+    try {
+      const { id } = request.params;
+
+      const file = await db.getFile({
+        _id: ObjectId(id),
+        userId: request.user._id.toString(),
+      });
+
+      if (!file) {
+        response.status(404).json({
+          error: 'Not found',
+        });
+        return;
+      }
+
+      await db.updateFile(
+        {
+          _id: ObjectId(id),
+        },
+        {
+          isPublic: false,
+        },
+      );
+
+      response.json({
+        id: file._id.toString(),
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: false,
+        parentId: file.parentId,
+      });
     } catch (error) {
       response.status(500).json({
         error: 'server error',
