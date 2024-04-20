@@ -96,6 +96,59 @@ class FilesController {
 
     return true;
   }
+
+  static async getShow(request, response) {
+    try {
+      const { id } = request.params;
+
+      const file = await db.getFile({ _id: ObjectId(id) });
+
+      if (!file) {
+        response.status(404).json({
+          error: 'Not found',
+        });
+        return;
+      }
+
+      response.json({
+        id: file._id.toString(),
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      });
+    } catch (error) {
+      response.status(500).json({
+        error: 'server error',
+      });
+    }
+  }
+
+  static async getIndex(request, response) {
+    try {
+      const { parentId, page } = request.query;
+
+      let transformedParentId = parentId;
+
+      if (transformedParentId === '0') {
+        transformedParentId = 0;
+      }
+
+      const files = await db.getFiles(
+        { parentId: transformedParentId },
+        page,
+        1,
+      );
+
+      response.json(files);
+    } catch (error) {
+      console.log(error);
+      response.status(500).json({
+        error: 'server error',
+      });
+    }
+  }
 }
 
 export default FilesController;

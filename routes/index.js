@@ -21,4 +21,8 @@ router.get('/users/me', UsersController.getMe);
 
 router.post('/files', AuthController.checkAuth, FilesController.postUpload);
 
+router.get('/files/:id', AuthController.checkAuth, FilesController.getShow);
+
+router.get('/files', AuthController.checkAuth, FilesController.getIndex);
+
 export default router;

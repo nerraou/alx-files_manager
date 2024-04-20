@@ -40,6 +40,15 @@ class DBClient {
     return this.db.collection('files').findOne(query);
   }
 
+  getFiles(query, page, limit) {
+    return this.db
+      .collection('files')
+      .find(query)
+      .skip(page * limit)
+      .limit(limit)
+      .toArray();
+  }
+
   createFile(file) {
     return this.db.collection('files').insertOne(file);
   }
