@@ -141,9 +141,17 @@ class FilesController {
         1,
       );
 
-      response.json(files);
+      response.json(
+        files.map((file) => ({
+          id: file._id.toString(),
+          userId: file.userId,
+          name: file.name,
+          type: file.type,
+          isPublic: file.isPublic,
+          parentId: file.parentId,
+        })),
+      );
     } catch (error) {
-      console.log(error);
       response.status(500).json({
         error: 'server error',
       });
