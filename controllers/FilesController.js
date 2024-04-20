@@ -2,11 +2,13 @@ import { ObjectId } from 'mongodb';
 import { promisify } from 'util';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import mime from 'mime-types';
 
 import db from '../utils/db';
 
 const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
+const readFileAsync = promisify(fs.readFile);
 
 const { FOLDER_PATH = '/tmp/files_manager' } = process.env;
 
@@ -234,6 +236,47 @@ class FilesController {
         isPublic: false,
         parentId: file.parentId,
       });
+    } catch (error) {
+      response.status(500).json({
+        error: 'server error',
+      });
+    }
+  }
+
+  static async getFile(request, response) {
+    try {
+      const { id } = request.params;
+
+      const file = await db.getFile({
+        _id: ObjectId(id),
+        userId: request.user._id.toString(),
+      });
+
+      if (!file || !file.isPublic) {
+        response.status(404).json({
+          error: 'Not found',
+        });
+        return;
+      }
+
+      if (file.type === 'folder') {
+        response.status(400).json({
+          error: "A folder doesn't have content",
+        });
+        return;
+      }
+
+      if (!fs.existsSync(file.localPath)) {
+        response.status(404).json({
+          error: 'Not found',
+        });
+        return;
+      }
+
+      const fileContent = await readFileAsync(file.localPath);
+
+      response.setHeader('Content-Type', mime.contentType(file.name));
+      response.send(fileContent);
     } catch (error) {
       response.status(500).json({
         error: 'server error',
