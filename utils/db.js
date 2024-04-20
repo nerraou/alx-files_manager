@@ -35,6 +35,14 @@ class DBClient {
   getUser(query) {
     return this.db.collection('users').findOne(query);
   }
+
+  getFile(query) {
+    return this.db.collection('files').findOne(query);
+  }
+
+  createFile(file) {
+    return this.db.collection('files').insertOne(file);
+  }
 }
 
 const dbClient = new DBClient();

@@ -10,10 +10,12 @@ class UsersController {
 
     if (!email) {
       response.status(400).json({ error: 'Missing email' });
+      return;
     }
 
     if (!password) {
       response.status(400).json({ error: 'Missing password' });
+      return;
     }
 
     try {

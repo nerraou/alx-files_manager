@@ -1,5 +1,7 @@
 import sha1 from 'sha1';
+import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
+
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
@@ -9,6 +11,7 @@ class AuthController {
 
     if (!authHeader) {
       response.status(401).json({ error: 'Unauthorized' });
+      return;
     }
 
     try {
@@ -19,14 +22,15 @@ class AuthController {
       const pass = sha1(auth[1]);
 
       const user = await dbClient.getUser({ email });
-      // console.log('USER IN AUTH GETCONNECT()', user);
 
       if (!user) {
         response.status(401).json({ error: 'Unauthorized' });
+        return;
       }
 
       if (pass !== user.password) {
         response.status(401).json({ error: 'Unauthorized' });
+        return;
       }
 
       const token = uuidv4();
@@ -36,22 +40,50 @@ class AuthController {
 
       response.status(200).json({ token });
     } catch (err) {
-      console.log(err);
       response.status(500).json({ error: 'Server error' });
     }
   }
 
   static async getDisconnect(request, response) {
     try {
-      const userToken = request.header('X-Token');
-      // console.log('USER TOKEN DISCONNECT', userToken);
+      const userToken = request.header('x-token');
+
       const userKey = await redisClient.get(`auth_${userToken}`);
-      // console.log('USER KEY DISCONNECT', userKey);
       if (!userKey) {
         response.status(401).json({ error: 'Unauthorized' });
+        return;
       }
+
       await redisClient.del(`auth_${userToken}`);
+
       response.status(204).send('Disconnected');
+    } catch (err) {
+      console.log(err);
+      response.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  static async checkAuth(request, response, next) {
+    try {
+      const token = request.headers['x-token'];
+
+      if (!token) {
+        response.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const key = `auth_${token}`;
+      const userId = await redisClient.get(key);
+
+      if (!userId) {
+        response.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const user = await dbClient.getUser({ _id: ObjectId(userId) });
+
+      request.user = user;
+      next();
     } catch (err) {
       console.log(err);
       response.status(500).json({ error: 'Server error' });
