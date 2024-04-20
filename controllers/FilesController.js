@@ -138,7 +138,7 @@ class FilesController {
       const files = await db.getFiles(
         { parentId: transformedParentId },
         page,
-        1,
+        20,
       );
 
       response.json(
