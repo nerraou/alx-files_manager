@@ -82,6 +82,11 @@ class AuthController {
 
       const user = await dbClient.getUser({ _id: ObjectId(userId) });
 
+      if (!user) {
+        response.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       request.user = user;
       next();
     } catch (err) {
