@@ -56,9 +56,8 @@ class AuthController {
 
       await redisClient.del(`auth_${userToken}`);
 
-      response.status(204).send('Disconnected');
+      response.status(204).send();
     } catch (err) {
-      console.log(err);
       response.status(500).json({ error: 'Server error' });
     }
   }
@@ -90,7 +89,6 @@ class AuthController {
       request.user = user;
       next();
     } catch (err) {
-      console.log(err);
       response.status(500).json({ error: 'Server error' });
     }
   }
