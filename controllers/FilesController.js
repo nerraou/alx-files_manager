@@ -261,20 +261,21 @@ class FilesController {
 
       const user = await AuthController.getUserFromAuth(request);
 
-      if (!user) {
-        response.status(404).json({
-          error: 'Not found',
-        });
-        return;
-      }
-
       const file = await db.getFile({
         _id: ObjectId(id),
-        userId: user._id.toString(),
-        isPublic: true,
       });
 
-      if (!file) {
+      let fileFound = !!file;
+
+      if (
+        fileFound
+        && !file.isPublic
+        && (!user || file.userId !== user._id.toString())
+      ) {
+        fileFound = false;
+      }
+
+      if (!fileFound) {
         response.status(404).json({
           error: 'Not found',
         });
@@ -302,8 +303,6 @@ class FilesController {
       }
 
       const fileContent = await readFileAsync(fileLocalPath);
-
-      console.log(mime.contentType(file.name));
 
       response.setHeader('Content-Type', mime.contentType(file.name));
       response.send(fileContent);
