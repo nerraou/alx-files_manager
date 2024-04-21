@@ -3,9 +3,12 @@ import { promisify } from 'util';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
+import Queue from 'bull';
 
 import db from '../utils/db';
 import AuthController from './AuthController';
+
+const fileQueue = new Queue('generate thumbnails');
 
 const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
@@ -62,6 +65,13 @@ class FilesController {
     }
 
     await db.createFile(newFileData);
+
+    if (type === 'image') {
+      fileQueue.add({
+        userId: request.user._id.toString(),
+        fileId: newFileData._id.toString(),
+      });
+    }
 
     response.status(201).json({
       id: newFileData._id.toString(),
@@ -247,6 +257,7 @@ class FilesController {
   static async getFile(request, response) {
     try {
       const { id } = request.params;
+      const { size } = request.query;
 
       const user = await AuthController.getUserFromAuth(request);
 
@@ -277,14 +288,22 @@ class FilesController {
         return;
       }
 
-      if (!fs.existsSync(file.localPath)) {
+      let fileLocalPath = file.localPath;
+
+      if (size) {
+        fileLocalPath = `${file.localPath}_${size}`;
+      }
+
+      if (!fs.existsSync(fileLocalPath)) {
         response.status(404).json({
           error: 'Not found',
         });
         return;
       }
 
-      const fileContent = await readFileAsync(file.localPath);
+      const fileContent = await readFileAsync(fileLocalPath);
+
+      console.log(mime.contentType(file.name));
 
       response.setHeader('Content-Type', mime.contentType(file.name));
       response.send(fileContent);
