@@ -64,22 +64,7 @@ class AuthController {
 
   static async checkAuth(request, response, next) {
     try {
-      const token = request.headers['x-token'];
-
-      if (!token) {
-        response.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const key = `auth_${token}`;
-      const userId = await redisClient.get(key);
-
-      if (!userId) {
-        response.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const user = await dbClient.getUser({ _id: ObjectId(userId) });
+      const user = await AuthController.getUserFromAuth(request);
 
       if (!user) {
         response.status(401).json({ error: 'Unauthorized' });
@@ -91,6 +76,29 @@ class AuthController {
     } catch (err) {
       response.status(500).json({ error: 'Server error' });
     }
+  }
+
+  static async getUserFromAuth(request) {
+    const token = request.headers['x-token'];
+
+    if (!token) {
+      return null;
+    }
+
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
+
+    if (!userId) {
+      return null;
+    }
+
+    const user = await dbClient.getUser({ _id: ObjectId(userId) });
+
+    if (!user) {
+      return null;
+    }
+
+    return user;
   }
 }
 

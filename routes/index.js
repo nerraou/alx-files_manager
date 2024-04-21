@@ -37,10 +37,6 @@ router.put(
   FilesController.putUnpublish,
 );
 
-router.get(
-  '/files/:id/data',
-  AuthController.checkAuth,
-  FilesController.getFile,
-);
+router.get('/files/:id/data', FilesController.getFile);
 
 export default router;

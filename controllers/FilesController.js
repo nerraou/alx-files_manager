@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
 
 import db from '../utils/db';
+import AuthController from './AuthController';
 
 const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
@@ -247,12 +248,22 @@ class FilesController {
     try {
       const { id } = request.params;
 
+      const user = await AuthController.getUserFromAuth(request);
+
+      if (!user) {
+        response.status(404).json({
+          error: 'Not found',
+        });
+        return;
+      }
+
       const file = await db.getFile({
         _id: ObjectId(id),
-        userId: request.user._id.toString(),
+        userId: user._id.toString(),
+        isPublic: true,
       });
 
-      if (!file || !file.isPublic) {
+      if (!file) {
         response.status(404).json({
           error: 'Not found',
         });
