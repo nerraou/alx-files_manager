@@ -132,7 +132,7 @@ class FilesController {
 
   static async getIndex(request, response) {
     try {
-      const { parentId, page = 0 } = request.query;
+      const { parentId = 0, page = 0 } = request.query;
 
       let transformedParentId = parentId;
 
